@@ -1,14 +1,16 @@
 from urllib.request import Request, urlopen
-from urrlib.parse import urlparse
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup as bs
 from url_regex import URL_REGEX
 import re
 import sys
-
+import os
+import time
 HEADERS = {'User-Agent': 'Mozilla/5.0'}
-
+SLEEP   = 1
 def get_links(webpage, filtr):
     req  = Request(webpage, headers=HEADERS)
+    time.sleep(SLEEP)
     page = urlopen(webpage)
     soup = bs(page)
     all_links= soup.findAll('a')
@@ -17,7 +19,7 @@ def get_links(webpage, filtr):
     print("# links ", len(all_links))
     for link in all_links:
         try:
-            if re.search(URL_REGEX, link.get('href')) and re.search(filtr, link.get('href')):
+            if re.search(URL_REGEX, link.get('href')): #and re.search(filtr, link.get('href')):
                 res.append(link.get('href'))
                 #print(link.get('href'))
         except TypeError:  #BS returns bs, sometimes
@@ -39,11 +41,10 @@ def crawl_flat(start_page, max_depth, filtr):
 try:
     start_page = sys.argv[1]
 except IndexError:
-    "Use: arg1 - target url"
+    print("Use: arg1 - target url")
 
 filtr = "/^((?!microsoft).)*$/"
-
 for link in crawl_flat(start_page, 1, filtr):
-    with open(link[:30], 'w') as f:
+    with open(urlparse(link).netloc, 'w+') as f:
         req = Request(link, headers=HEADERS)
-        f.write(urlopen(link))
+        f.write(urlopen(link).read().decode('utf-8') + ".html")
