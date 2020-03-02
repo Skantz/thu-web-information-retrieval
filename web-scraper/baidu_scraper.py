@@ -6,6 +6,7 @@ import re
 import sys
 import os
 import time
+
 HEADERS = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
          'Referer': 'https://cssspritegenerator.com',
@@ -14,61 +15,57 @@ HEADERS = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KH
          'Accept-Language': 'en-US,en;q=0.8',
          'Connection': 'keep-alive'}
 SLEEP   = 0.2
-def get_bing_content(search_page):
+
+def get_baidu_content(search_page):
     search_res = []
     req  = Request(search_page, headers=HEADERS)
     page = urlopen(req)
     soup = bs(page, "html.parser")
-    all_links = soup.find_all(class_="b_algo")
+    all_links = soup.find_all(class_="result")
     for idx, link in enumerate(all_links):
-        temp_res = str(link.find("h2"))
-        #print(temp_res)
-        re_split = re.split('href=\"*|\">|</a>', temp_res)
-        #print(re_split)
-        #print(link.get_text())
-        search_res.append({"rank":idx + 1, "title":re_split[2], "url": re_split[1]})
-    return search_res 
-def get_links(webpage, filtr):
-    req  = Request(webpage, headers=HEADERS)
-    time.sleep(SLEEP)
-    page = urlopen(req)
-    soup = bs(page, "html.parser")
-    all_links= soup.findAll('a')
-    res = []
-    print("Crawl on ", webpage)
-    print("# links ", len(all_links))
-    for link in all_links:
-        try:
-            if re.search(URL_REGEX, link.get('href')): #and re.search(filtr, link.get('href')):
-                res.append(link.get('href'))
-                #print(link.get('href'))
-        except TypeError:  #BS returns bs, sometimes
-            continue
-    return res
-def crawl_flat(start_page, max_depth, filtr):
-    res = [start_page]
-    buf = [start_page]
-    for _ in range(max_depth):
-        new_buf = []
-        for link in buf:
-            new_pages = get_links(link, filtr)
-            new_buf += new_pages
-            res += new_pages
-        buf = new_buf
-    return res
+
+        #'{"title":"$108 Flights to Beijing, China (BJS) - Tripadvisor","url":"http://www.baidu.com/link?url=-VvkH4M5BDkpOJOu8DnoMe3n_6z0CnkH5RL6wZcwRiY39RyLrZZ_6_cPV4TI4rZoH8l4SWm4-QDKyBmR-KqR5_fVeh3RQFh_kM0i9VGhFUqZSs1xaWPNyFtlEZpsSFhj"}\' 
+        re_split = re.split('\"title\":\"|\","url":\"|\"\}\'|\&quot\;\:\&quot\;|\&quot\;\}\"', str(link))
+        ##print("\n\n\n\n\n".join(re_split))
+        #print("title", re_split[1])
+        #print("temp url", re_split[2])
+        search_res.append({'rank':idx+1, 'title':re_split[1], 'baidu_link':re_split[2]})
+    return search_res
+
 try:
     start_page = sys.argv[1]
 except IndexError:
     print("Use: arg1 - target url")
-filtr = "/^((?!microsoft).)*$/"
+
+search_res = get_baidu_content(start_page)
+
+for r in search_res:
+
+    try:
+        #req = Request(r['baidu_link'], HEADERS, method='POST')
+        print(r['baidu_link'])
+        page = urlopen(r['baidu_link'], timeout=2)
+        r['url'] = page.geturl()
+        with open(urlparse(r['url']).netloc + ".html", 'w+') as f:
+            f.write(page.read().decode('utf-8'))
+    except Exception as e:
+        print(e)
+        continue
+    del r['baidu_link']
+
+
+for r in search_res:
+    print(r)
+
+"""
 for idx, link in enumerate(crawl_flat(start_page, 1, filtr)):
     #dict = {"rank": idx + 1, "title":, "url": urlparse(link).netloc}
     time.sleep(SLEEP)
     if "microsoft" in link:
         continue
-    if "bing" in link:
-        bing_results = get_bing_content(link)
-        for r in bing_results:
+    if "baidu" in link:
+        baidu_results = get_baidu_content(link)
+        for r in baidu_results:
             print(r)
     with open(urlparse(link).netloc + ".html", 'w+') as f:
         print("Try to open", urlparse(link).netloc)
@@ -77,3 +74,4 @@ for idx, link in enumerate(crawl_flat(start_page, 1, filtr)):
             f.write(urlopen(link).read().decode('utf-8'))
         except Exception as e: #HTTPerror
             print(e)
+"""
