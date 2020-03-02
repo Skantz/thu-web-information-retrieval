@@ -15,23 +15,19 @@ HEADERS = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KH
          'Connection': 'keep-alive'}
 SLEEP   = 0.2
 def get_bing_content(search_page):
+    search_res = []
     req  = Request(search_page, headers=HEADERS)
-    time.sleep(SLEEP)
     page = urlopen(req)
     soup = bs(page, "html.parser")
-    #for remove_tag in ['a', 'strong', 'cite']:
-    #    for m in soup.findAll(remove_tag):
-    #        m.replaceWithChildren()
-    #    if link.attrs['class'] == "b_algo":
-    #        print(link.attrs)
     all_links = soup.find_all(class_="b_algo")
-    for link in all_links:
+    for idx, link in enumerate(all_links):
         temp_res = str(link.find("h2"))
-        print(temp_res)
+        #print(temp_res)
         re_split = re.split('href=\"*|\">|</a>', temp_res)
-        print(re_split)
+        #print(re_split)
         #print(link.get_text())
-    print("printed all links")
+        search_res.append({"rank":idx + 1, "title":re_split[2], "url": re_split[1]})
+    return search_res 
 def get_links(webpage, filtr):
     req  = Request(webpage, headers=HEADERS)
     time.sleep(SLEEP)
@@ -67,9 +63,13 @@ except IndexError:
 filtr = "/^((?!microsoft).)*$/"
 for idx, link in enumerate(crawl_flat(start_page, 1, filtr)):
     #dict = {"rank": idx + 1, "title":, "url": urlparse(link).netloc}
-    if "microsoft" in link or "bing" in link:
-        if "bing" in link:
-            print(get_bing_content(link))
+    time.sleep(SLEEP)
+    if "microsoft" in link:
+        continue
+    if "bing" in link:
+        bing_results = get_bing_content(link)
+        for r in bing_results:
+            print(r)
     with open(urlparse(link).netloc + ".html", 'w+') as f:
         print("Try to open", urlparse(link).netloc)
         try:
