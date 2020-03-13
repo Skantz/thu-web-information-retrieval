@@ -19,30 +19,35 @@ for html_snippet in bs_text:
 class DocumentQuery:
     doc_paths: List[str]
     query: str
-
-    doc_content: List[List[str]]   
-    doc_length: Dict[int]
+    doc_content: List[List[str]]
+    doc_word_count: Dict[str:int]
     term_freq_by_doc: Dict[Tuple(str, str): int]
-    is_word_in_doc: Set
+    is_term_in_query: Set
 
-def prepare_bm25_stats(search_path: str, user_query: str):
-    doc_paths = glob(path.join(search_path, "*.tsv"))
-    
+    def init_doc_query(self, search_path, query):
+        self.doc_paths = glob(path.join(search_path, "*.tsv"))
+        self.query = query
+        for term in query:
+            self.is_term_in_query.add(term)
 
-    pass
+    def init_term_freq(self):
+        for dp in self.doc_paths:
+            html = open(dp).read()
+            raw = BeautifulSoup(html)
+            filtered = raw.find_all('p')
+            text = [line.text for line in filtered]
+            self.doc_word_count[dp] = 0
+            for row in text:
+                self.doc_word_count[dp] += len(row)
+                self.doc_content.append([row])
+                for term in row:
+                    if self.is_term_in_query[term]:
+                        self.term_freq_by_doc[(dp, term)] += 1
 
-def calc_term_freq(doc: List[str], term: List[str]):
-    term_freq = {w:0 for w in term}
-    term_set = set(term)
-    for line in doc:
-        for word in line:
-            if word in term_set:
-                term_freq[word] += 1
-    return term_freq
+    def bm25_score(self, doc_path, query):
+        N = sum(len(d) for d in self.doc_content)
+        IDF = lambda qi : log2( (N - self.term_freq_by_doc[(doc_path, qi)] + 0.5) / self.term_freq_by_doc[(doc_path, qi)] + 0.5)
 
-
-def bm25_score(D, Q):
-    IDF = lambda qi, N, ćount_word_in_doc: log2( (N - count_word_in_doc[qi] + 0.5) / count_word_in_doc[qi] + 0.5)
 
 
 #to_remove = soup.find_all("div") 
