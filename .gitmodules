@@ -1,0 +1,3 @@
+[submodule "ranking/VSM"]
+	path = ranking/VSM
+	url = https://github.com/benyaminsalimi/VSM
