@@ -1,3 +1,6 @@
+import csv
+from math import log2
+
 def kappa(ratings, num_cat=2):
     """ mean of annotations
         pairwise cohen's kappa
@@ -26,26 +29,28 @@ def MAP(retrieved_objects_by_voter, object_ratings_by_voter):
 
     n_voter = len(retrieved_objects_by_voter)
 
+    def AP(retrieved_objects_by_voter, object_ratings_by_voter)
+        relevant_objects = [obj for i, obj in enumerate(objects)
+                            for j, objects in enumerate(retrieved_objects_by_voter)
+                            if objects_ratings_by_voter[j][i] >= 1]
+            
+        relevant_objects = set(relevant_objects)
+        all_objects = set([obj for obj in objects for objects in retrieved_objects_by_voter])
 
-    relevant_objects = [obj for i, obj in enumerate(objects)
-                        for j, objects in enumerate(retrieved_objects_by_voter)
-                        if objects_ratings_by_voter[j][i] >= 1]
-        
-    relevant_objects = set(relevant_objects)
-    all_objects = set([obj for obj in objects for objects in retrieved_objects_by_voter])
+        numer = len(all_objects.intersection(relevant_objects))
+        denom = len(all_objects)
 
-    precision = [0 for _ in range(n_voter)]
-    recall    = [0 for _ in range(n_voter)]
+        return numer/denom
 
+    APs = []
+    for i in range(1, 12):
+        res = AP(retrieved_objects_by_voter[:i], object_ratings_by_voter[:i])
+        APs.append(res)
 
+    MAP = sum(APs)/len(APs)
 
-    for i in range(n_voter):
-        precision[i] =    #Relevant U retrieved  / retrieved
-        recall[i]    =    #relevant U retrieved  / relevant
+    return MAP
 
-    #AP: compute at every position
-
-    pass
 
 def NDCG():
     """Rm average of relevance annotation
@@ -55,6 +60,22 @@ def NDCG():
        else -> 0
        compute NDCG@5, NDCG@10
     """
+    #DCG = sum 1 -> p of rel_i / log_2 (i + 1), p position
     pass
 
 
+def main():
+    #IO
+    #input. csv.
+    #relevance annotation.tsv: query, url, docID, SE, annotations [1;2;]..
+    #SE_ranking.csv:  rank, SE1_docID, SE2_docID
+    #RM_ranking.csv : docID, VSM_rank, BM25_rank
+    
+
+    #output: EVA_query_n_ID.csv
+    #measure, score
+    #kappa[2,5], MAP-ba,bi,VSM,BM25, NDCG@[5,10]-SE1,SE2,VSM,BM25
+    pass
+
+if __name__ == "__main__":
+    main()
